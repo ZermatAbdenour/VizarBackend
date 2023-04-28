@@ -14,8 +14,8 @@ namespace vizar.Dtos{
         [Required]public float Depth{get;init;}
         [Required]public float Weight{get;init;}
         [Required]public float Volume{get;init;}
-        [Required]public Guid ImageID {get;init;}
-        [Required]public Guid ModelID{get;init;}
+        //[Required]public Guid ImageID {get;init;}
+        //[Required]public Guid ModelID{get;init;}
         [Required]public string ModelExtension{get;init;}
     }
 }

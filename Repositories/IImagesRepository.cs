@@ -9,6 +9,5 @@ namespace vizar.repositiory
         FileStreamResult GetImage(Guid id);
         bool DeleteImage(Guid id);
         Task<Guid> UploadImage(IFormFile Image);
-
     }
 }

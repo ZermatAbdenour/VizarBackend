@@ -3,6 +3,7 @@ using vizar.Entities;
 using vizar.repositiory;
 using vizar.Dtos;
 using System.IO;
+
 namespace vizar.Controllers
 {
     [ApiController]

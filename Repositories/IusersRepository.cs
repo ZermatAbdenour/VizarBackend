@@ -20,6 +20,8 @@ namespace vizar.repositiory
         void SetProductSavedStat(Guid userid,Guid productid,bool SaveStat);
         bool GetProductSavedStat(Guid userid,Guid productid);
         void RemoveSavedProductFromAllUser(Guid productid);
+        bool VerifyUser(Guid Userid);
+        Task<bool> SendEmailAsync(MailRequest request);
     }
 }
 

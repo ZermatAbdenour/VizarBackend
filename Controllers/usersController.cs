@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using vizar.Entities;
 using vizar.repositiory;
 using vizar.Dtos;
+using BCrypt.Net;
 
 namespace vizar.Controllers
 {
@@ -36,19 +37,26 @@ namespace vizar.Controllers
 
         [Route("register")]
         [HttpPost()]
-        public ActionResult<user> CreateUser(CreateUserDto createDto){
+        public async Task<ActionResult<user>> CreateUser(CreateUserDto createDto){
             user CheckEmail = repository.GetUserByEmail(createDto.Email);
             if(CheckEmail != null)
                 return Unauthorized();
             user CheckName = repository.GetUserByName(createDto.Name);
             if(CheckName != null)
                 return Unauthorized();
+
             
+
+
+
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(createDto.Password, BCrypt.Net.BCrypt.GenerateSalt());
+
             user newuser = new(){
                 Id = Guid.NewGuid(),
+                Verified = false,
                 UserName = createDto.Name,
                 Email = createDto.Email,
-                Password = createDto.Password,
+                Password = hashedPassword,
                 FullName = String.Empty,
                 Mobile = String.Empty,
                 Adresse = String.Empty,
@@ -57,8 +65,21 @@ namespace vizar.Controllers
 
             };
 
-            repository.CreateUser(newuser);
+            
 
+ 
+            //Send email confirmation
+            MailRequest request = new (){
+                ToEmail = createDto.Email,
+                Userid = newuser.Id.ToString()
+            };
+            
+            bool sendEmail = await repository.SendEmailAsync(request);
+            if(!sendEmail)
+                return NotFound();
+
+            repository.CreateUser(newuser);
+            
             return newuser;
         }
         [Route("login")]
@@ -67,7 +88,9 @@ namespace vizar.Controllers
             var user = repository.GetUserByEmail(loginDto.Email);
             if(user == null)
                 return NotFound();
-            if(user.Password != loginDto.Password)
+            if(!user.Verified)
+                return Forbid();
+            if(!BCrypt.Net.BCrypt.Verify(loginDto.Password, user.Password))
                 return Unauthorized();
             else return user;
         }
@@ -78,17 +101,28 @@ namespace vizar.Controllers
             if(User == null)
                 return NotFound();
             
-            if(User.Password != updatePassWorddto.OldPassword)
+            if(!BCrypt.Net.BCrypt.Verify(updatePassWorddto.OldPassword, User.Password))
                 return Unauthorized();
             
             //Update password
 
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(updatePassWorddto.NewPassword, BCrypt.Net.BCrypt.GenerateSalt());
+
             user updatedUser = User with{
-                Password = updatePassWorddto.NewPassword,
+                Password = hashedPassword,
             };
 
             repository.UpdateUser(updatedUser);
             return updatedUser;
+        }
+        [Route("update/emailverification/{id}")]
+        [HttpGet()]
+        public ActionResult<user> VerifyEmail(Guid id){
+
+            if(repository.VerifyUser(id))
+                return Ok();
+            
+            return NotFound();
         }
 
         [Route("update/profile/{id}")]
@@ -154,7 +188,8 @@ namespace vizar.Controllers
                 FullName = user.FullName,
                 Email = user.Email,
                 Mobile = user.Mobile,
-                Adresse = user.Adresse
+                Adresse = user.Adresse,
+                ImageID = user.ImageID
             };
 
             return seller;
@@ -197,5 +232,18 @@ namespace vizar.Controllers
         public bool SetProductSavedStat(Guid id,Guid productid){
             return repository.GetProductSavedStat(id,productid);
         }
+
+        [HttpGet("sendEmail")]
+        public async Task<ActionResult> Sendmil(string Email,Guid id){
+            //Send email confirmation
+            MailRequest request = new (){
+                ToEmail = Email,
+                Userid = id.ToString()
+
+            };
+            await repository.SendEmailAsync(request);
+            return Ok();
+        }
+
     }
 }

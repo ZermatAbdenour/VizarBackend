@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace vizar.Dtos{
@@ -7,6 +8,6 @@ namespace vizar.Dtos{
         [Required]public string Email{get;init;}
         [Required]public string Mobile{get;init;}
         [Required]public string Adresse{get;init;}
-
+        [Required]public Guid ImageID{get;init;}
     }
 }

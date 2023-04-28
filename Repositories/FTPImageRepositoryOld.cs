@@ -1,16 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using vizar.Dtos;
 using vizar.Entities;
-using CloudinaryDotNet;
-using CloudinaryDotNet.Actions;
-
 namespace vizar.repositiory
 {
-    public class FTPImageRepository : IImagesRepository
+    /*
+    public class FTPImageRepositoryOld : IImagesRepository
     {
         public static string RepositioryFolder = "\\Images\\";
-        private Cloudinary cloud;
-        public FTPImageRepository(){
+        public FTPImageRepositoryOld(){
             if (!Directory.Exists(Directory.GetCurrentDirectory() + RepositioryFolder))
             {
                 Directory.CreateDirectory(Directory.GetCurrentDirectory() + RepositioryFolder);
@@ -56,4 +53,5 @@ namespace vizar.repositiory
 
         }
     }
+    */
 }

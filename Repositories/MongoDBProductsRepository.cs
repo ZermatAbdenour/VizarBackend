@@ -84,17 +84,37 @@ namespace vizar.repositiory
 
             return result;
         }
-        public IEnumerable<Product> FullSearchProducts(string query,int Offset,int productscount,string categories){
+        public IEnumerable<Product> FullSearchProducts(string query,int Offset,int productscount,string categories,float minPrice,float maxPrice){
             List<Product> result = new List<Product>();
+
+            
             if(categories.Contains("All categories")){
-                result = ProductsCollection.Aggregate().Search( SearchBuilders<Product>.Search
-                    .Text(query, x => x.Name)).Skip(Offset).Limit(productscount).ToList();
+                Console.WriteLine(query);
+                Console.WriteLine(!string.IsNullOrWhiteSpace(query));
+                if(!string.IsNullOrWhiteSpace(query)){
+                    //Search with the query
+                    result = ProductsCollection.Aggregate().Search( SearchBuilders<Product>.Search
+                        .Compound().Must(SearchBuilders<Product>.Search.Text(query, x => x.Name),SearchBuilders<Product>.Search.RangeDouble(x => x.Price).Gte(minPrice).Lte(maxPrice))).Skip(Offset).Limit(productscount).ToList();
+                }else{
+                    //Filter products only
+                    result = GetProducts(Offset,productscount).ToList();
+                }
+
             }
             else{
-                result = ProductsCollection.Aggregate().Search( SearchBuilders<Product>.Search
-                    .Compound().Must(SearchBuilders<Product>.Search
-                    .Text(query, x => x.Name),SearchBuilders<Product>.Search.QueryString(x => x.Categorie,GenerateFiltersQueryString(categories)))).Skip(Offset).Limit(productscount).ToList();
+                if(!string.IsNullOrWhiteSpace(query)){
+                    result = ProductsCollection.Aggregate().Search( SearchBuilders<Product>.Search
+                        .Compound().Must(SearchBuilders<Product>.Search
+                        .Text(query, x => x.Name),SearchBuilders<Product>.Search.QueryString(x => x.Categorie,GenerateFiltersQueryString(categories)),SearchBuilders<Product>.Search.RangeDouble(x => x.Price).Gte(minPrice).Lte(maxPrice))).Skip(Offset).Limit(productscount).ToList();
+                }
+                else
+                    //
+                    result = ProductsCollection.Aggregate().Search( SearchBuilders<Product>.Search
+                        .Compound().Must(SearchBuilders<Product>.Search.QueryString(x => x.Categorie,GenerateFiltersQueryString(categories)),SearchBuilders<Product>.Search.RangeDouble(x => x.Price).Gte(minPrice).Lte(maxPrice))).Skip(Offset).Limit(productscount).ToList();
             }
+            
+
+
 
             return result;
         }

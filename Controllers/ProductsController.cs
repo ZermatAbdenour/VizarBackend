@@ -42,10 +42,10 @@ namespace vizar.Controllers
             return repository.SearchProducts(searchquery);
         }
 
-        [HttpPost("search/FullSearch")]
-        public IEnumerable<Product> FullSearchProducts(string query,int Offset,int productscount,string categories)
+        [HttpGet("search/FullSearch")]
+        public IEnumerable<Product> FullSearchProducts(string query,int Offset,int productscount,string categories,float minPrice,float maxPrice)
         {
-            return repository.FullSearchProducts(query,Offset,productscount,categories);
+            return repository.FullSearchProducts(query,Offset,productscount,categories,minPrice,maxPrice);
         }
 
         [Route("search/autocomplete")]
@@ -65,7 +65,7 @@ namespace vizar.Controllers
         }
 
 
-        
+        /*
         [HttpPost()]
         public ActionResult<Product> CreateProduct(ProductDto createDto){
             Product newproduct = new(){
@@ -96,7 +96,41 @@ namespace vizar.Controllers
 
             return newproduct;
         }
-        
+        */
+
+        [HttpPost()]
+        public async Task CreateProduct(IFormFile ImageFile,IFormFile ModelFile,[FromForm]ProductDto createDto){
+            Guid modelId = await modelsrepository.UploadModel(ModelFile);
+            Guid imageId = await imagesrepository.UploadImage(ImageFile);
+            
+            Product newproduct = new(){
+                Id = Guid.NewGuid(),
+                PublishDate = DateTime.Now.ToString("dd/MM/yyyy"),
+                Name = createDto.Name,
+                Price = createDto.Price,
+                Description = createDto.Description,
+                Categorie = createDto.Categorie,
+                SellerID = createDto.SellerID,
+                SellerName = createDto.SellerName,
+                WebLink = createDto.WebLink,
+                Width = createDto.Width,
+                Height = createDto.Height,
+                Depth = createDto.Depth,
+                Weight = createDto.Weight,
+                Volume = createDto.Volume,
+                ImageID = imageId,
+                ModelID = modelId,
+                ModelExtension = createDto.ModelExtension
+            };
+
+            //Create Product
+            repository.CreateProduct(newproduct);
+            
+            //add the product to seller products
+            usersrepository.AddUserProduct(newproduct.SellerID,newproduct.Id);
+
+        }
+
         /*
         [HttpPost("")]
         public async Task<ActionResult<Product>> CreateProduct(ProductDto createDto,IFormFile image,IFormFile model){
@@ -136,11 +170,24 @@ namespace vizar.Controllers
         */
 
         [HttpPut("{id}")]
-        public ActionResult UpdateProduct(Guid id,ProductDto updateDto){
+        public async Task<ActionResult> UpdateProduct(Guid id,[FromForm]bool ImageUpdated,[FromForm]bool ModelUpdated,IFormFile ImageFile,IFormFile ModelFile,[FromForm]ProductDto updateDto){
             var existingProduct = repository.GetProduct(id);
 
             if(existingProduct is null)
                 return NotFound();
+
+            Guid ImageID = existingProduct.ImageID;
+            Guid ModelID = existingProduct.ModelID;
+            if(ImageUpdated){
+                //replace Image
+                imagesrepository.DeleteImage(existingProduct.ImageID);
+                ImageID = await imagesrepository.UploadImage(ImageFile);
+            }
+            if(ModelUpdated){
+                //replace Image
+                modelsrepository.DeleteModel(existingProduct.ModelID);
+                ModelID = await modelsrepository.UploadModel(ModelFile);
+            }
 
             Product UpdatedProduct = existingProduct with{
                 Name = updateDto.Name,
@@ -156,14 +203,15 @@ namespace vizar.Controllers
                 Depth = updateDto.Depth,
                 Weight = updateDto.Weight,
                 Volume = updateDto.Volume,
-                ImageID = updateDto.ImageID,
-                ModelID = updateDto.ModelID,
+                ImageID = ImageID,
+                ModelID = ModelID,
                 ModelExtension = updateDto.ModelExtension
                 
             };
+
             repository.UpdateProduct(UpdatedProduct);
 
-            return NoContent();
+            return Ok();
         }
 
 

@@ -10,7 +10,7 @@ namespace vizar.repositiory
         IEnumerable<Product> GetProducts();
         IEnumerable<Product> GetProducts(int Offset,int productscount);
         IEnumerable<Product> SearchProducts(string query);
-        IEnumerable<Product> FullSearchProducts(string query,int Offset,int productscount,string categories);
+        IEnumerable<Product> FullSearchProducts(string query,int Offset,int productscount,string categories,float minPrice,float maxPrice);
         IEnumerable<Product> AutoComplete(string query);
         void CreateProduct(Product newproduct);
         void UpdateProduct(Product updatedProduct);
